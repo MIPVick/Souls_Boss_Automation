@@ -175,7 +175,7 @@ def read_values():
     round_crop.save("round_crop.png")
     damage_crop.save("damage_crop.png")
 
-    round_config = '--psm 10 -c tessedit_char_whitelist=0123456789'
+    round_config = '--psm 8 -c tessedit_char_whitelist=0123456789'
     damage_config = '--psm 7 -c tessedit_char_whitelist=0123456789,/'
 
     round_text = pytesseract.image_to_string(
