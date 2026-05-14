@@ -12,6 +12,14 @@ pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 # variables
 run_counter = 1
 
+def connect_adb():
+    subprocess.run([
+        ADB_PATH,
+        "connect",
+        DEVICE
+    ])
+    print("ADB Connected")
+
 #sending message to telegram
 
 # packages your message such as dmg, round and screenshot and sends it to your bot
@@ -134,10 +142,6 @@ def tap(x, y):
 # positions of the respective buttons for my resolution ( might be different for you)
 def restart_run():
 
-    # Pause
-    tap(*PAUSE_BUTTON)
-    time.sleep(1)
-
     # Restart
     tap(*RESTART_BUTTON)
     time.sleep(1)
@@ -226,6 +230,14 @@ def read_values():
     #print("Detected Damage:", damage_number)
     return round_number, damage_number
 
+# Connecting to Bluestacks through ADB
+connect_adb()
+
+tap(*START_BUTTON)
+time.sleep(1)
+
+tap(*START_BUTTON)
+
 while True:
 
     restart_run()
@@ -233,6 +245,7 @@ while True:
     time.sleep(45)
 
     pause_run()
+    time.sleep(1)
 
     capture_screenshot()
 
