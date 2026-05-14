@@ -11,9 +11,10 @@ pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
 LAST_UPDATE_ID = 0
 
 # variables
-run_counter = 1
+run_counter = 0
 
 def connect_adb():
+
     subprocess.run([
         ADB_PATH,
         "connect",
@@ -27,7 +28,6 @@ def connect_adb():
 def send_telegram_message(message):
 
     url = f"https://api.telegram.org/bot{TOKEN}/sendMessage"
-
     requests.post(url, data={
         "chat_id": CHAT_ID,
         "text": message
@@ -37,9 +37,7 @@ def send_telegram_message(message):
 def send_telegram_photo(photo_path, caption=""):
 
     url = f"https://api.telegram.org/bot{TOKEN}/sendPhoto"
-
     with open(photo_path, "rb") as photo:
-
         requests.post(
             url,
             data={
@@ -51,37 +49,30 @@ def send_telegram_photo(photo_path, caption=""):
             }
         )
 
-
 # simple stuff, gets the latest message from telegram 
 def get_latest_message():
 
     global LAST_UPDATE_ID
-
     url = (
         f"https://api.telegram.org/bot{TOKEN}/getUpdates"
         f"?offset={LAST_UPDATE_ID + 1}"
     )
-
     response = requests.get(url)
-
     data = response.json()
-
     results = data["result"]
 
     if not results:
         return None
 
     latest = results[-1]
-
     LAST_UPDATE_ID = latest["update_id"]
-
     try:
         return latest["message"]["text"].lower()
-
     except:
         return None
 
 def clear_old_updates():
+
     global LAST_UPDATE_ID
     url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
     response = requests.get(url)
@@ -96,17 +87,11 @@ def clear_old_updates():
 def wait_for_command():
 
     print("Waiting for command...")
-
     while True:
-
         command = get_latest_message()
-
-        if command in ["continue", "restart", "stop"]:
-
+        if command in ["continue", "restart", "stop", "resume","quit","exit"]:
             print(f"Received: {command}")
-
             return command
-
         time.sleep(2)
 
 # Saves screenshot inside emulator (ADB stuff)
@@ -162,26 +147,26 @@ def restart_run():
     print("Run restarted!")
 
 def pause_run():
+
     # Pause
     tap(*PAUSE_BUTTON)
     print("Run Paused")
 
 def start_run():
+
     #starting the run
     tap(*START_BUTTON)
     print("Run started")
 
 def continue_run():
 
+    #continuing the run
     tap(*CONTINUE_BUTTON)
-
     time.sleep(1)
-
     print("Run continued!")
 
 # captures part of the screenshot where I have my round and dmg values and use OCR to read them ( it gets fucked up when reading round values over 10)
 def read_values():
-
     img = Image.open("screen.png")
 
     round_crop = img.crop(ROUND_CROP)
@@ -215,7 +200,6 @@ def read_values():
     }
 
     round_text = CORRECTIONS.get(round_text, round_text)
-
     damage_text = damage_text.strip()
 
     # making sure we only keep values before slash
@@ -224,7 +208,7 @@ def read_values():
     # Remove commas
     damage_text = damage_text.replace(",", "")
 
-    # Convert safely
+    # Converting
     try:
         round_number = int(round_text)
     except:
@@ -251,13 +235,11 @@ tap(*START_BUTTON)
 while True:
 
     restart_run()
-
-    time.sleep(25)
-
+    time.sleep(45)
     pause_run()
-    time.sleep(0.25)
-
+    time.sleep(1)
     capture_screenshot()
+    run_counter += 1
 
     round_number, damage_number = read_values()
 
@@ -284,31 +266,20 @@ while True:
             f"Run Number: {run_counter} ",
         )
 
-        send_telegram_message(message)
-
         send_telegram_photo(
             "screen.png",
-            caption="Current paused run"
+            caption= message
         )
 
         command = wait_for_command()
 
-        if command == "continue":
+        match command:
 
-            continue_run()
-
-            break
-
-        elif command == "restart":
-
-            restart_run()
-
-            continue
-
-        elif command == "stop":
-
-            print("Bot stopped by user.")
-
-            break
-    else:
-        run_counter += 1
+            case "continue" | "resume":
+                continue_run()
+            
+            case "restart":
+                restart_run()
+        
+            case "stop" | "quit" | "exit":
+                break
