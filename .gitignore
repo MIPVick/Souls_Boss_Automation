@@ -1,0 +1,14 @@
+venv/
+.vscode/
+__pycache__/
+
+config.py
+restart.py
+telegram_message.py
+README1.md
+
+
+screen.png
+round_crop.png
+damage_crop.png
+damage_crop - small.png
