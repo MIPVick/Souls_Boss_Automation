@@ -8,6 +8,7 @@ from config import *
 
 # need to download Tesseract-OCR and paste the file location here
 pytesseract.pytesseract.tesseract_cmd = TESSERACT_PATH
+LAST_UPDATE_ID = 0
 
 # variables
 run_counter = 1
@@ -50,14 +51,16 @@ def send_telegram_photo(photo_path, caption=""):
             }
         )
 
-LAST_UPDATE_ID = None
 
 # simple stuff, gets the latest message from telegram 
 def get_latest_message():
 
     global LAST_UPDATE_ID
 
-    url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
+    url = (
+        f"https://api.telegram.org/bot{TOKEN}/getUpdates"
+        f"?offset={LAST_UPDATE_ID + 1}"
+    )
 
     response = requests.get(url)
 
@@ -70,18 +73,24 @@ def get_latest_message():
 
     latest = results[-1]
 
-    update_id = latest["update_id"]
-
-    if update_id == LAST_UPDATE_ID:
-        return None
-
-    LAST_UPDATE_ID = update_id
+    LAST_UPDATE_ID = latest["update_id"]
 
     try:
         return latest["message"]["text"].lower()
 
     except:
         return None
+
+def clear_old_updates():
+    global LAST_UPDATE_ID
+    url = f"https://api.telegram.org/bot{TOKEN}/getUpdates"
+    response = requests.get(url)
+    data = response.json()
+    results = data["result"]
+
+    if results:
+        LAST_UPDATE_ID = results[-1]["update_id"]
+        print("Old Telegram updates cleared")
 
 # fucntion used to accept commands send from telegram ( base level for now)
 def wait_for_command():
@@ -232,6 +241,7 @@ def read_values():
 
 # Connecting to Bluestacks through ADB
 connect_adb()
+clear_old_updates()
 
 tap(*START_BUTTON)
 time.sleep(1)
@@ -242,7 +252,7 @@ while True:
 
     restart_run()
 
-    time.sleep(45)
+    time.sleep(25)
 
     pause_run()
     time.sleep(1)
