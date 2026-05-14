@@ -255,7 +255,7 @@ while True:
     time.sleep(25)
 
     pause_run()
-    time.sleep(1)
+    time.sleep(0.25)
 
     capture_screenshot()
 
